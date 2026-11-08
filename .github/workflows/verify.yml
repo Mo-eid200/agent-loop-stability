@@ -1,0 +1,24 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -r requirements.txt
+      - name: Verification suite, real-data validation, mutation testing
+        run: python run_all.py
+      - name: Results
+        if: always()
+        run: cat RESULTS.md >> "$GITHUB_STEP_SUMMARY"

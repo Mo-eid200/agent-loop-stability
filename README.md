@@ -59,7 +59,7 @@ e[t+1] = e[t] - k * sum_i e[t - d_i(t)]          aggregate gain K = N k
 **Constant delay D.** The loop is stable if and only if `K < kappa(D) = 2 sin(pi / (2(2D+1)))`. That gives 2, 1, 0.618, 0.445, … for D = 0, 1, 2, 3. For agents with different delays, `sum k_i < kappa(max d_i)` is sufficient, and it is tight when all the delays are equal.
 
 **Fitting.** `fit` estimates D and K with a **scale-invariant, robust estimator**:
-- For each candidate delay, a weighted median of correction / lagged error.
+- For each candidate delay, a weighted median of correction / lagged error. Since version 1.1 the weights use a past-only scale, so a step's weight never depends on its own reply. This is the estimator analysed in Paper III.
 - The delay is chosen by the mean bounded residual.
 - A single wild reply (real LLMs occasionally answer 31860 instead of 3180, or flip a sign) cannot dominate it, and neither can the geometric growth of an unstable loop.
 - A bootstrap re-selects the delay in every resample, so the confidence interval on K also carries the uncertainty about D.
@@ -111,8 +111,8 @@ The 12 tests in layer 1 check:
 - the closed-form mean-square operator against brute-force enumeration and against 400,000 simulated paths;
 - the regime operator against simulation;
 - recovery of the delay and gain on 300 synthetic loops with 5% wild corrections:
-  - when it says the delay is identified, it is right 241 times out of 242;
-  - 95% confidence intervals cover the truth 95.7% of the time;
+  - when it says the delay is identified, it is right 240 times out of 241;
+  - 95% confidence intervals cover the truth 96.0% of the time;
 - that no verdict ever lands on the wrong side of the bound;
 - the CLI end to end.
 
@@ -129,6 +129,7 @@ The 12 tests in layer 1 check:
 
 The theory and the LLM experiments come from:
 
+- M. Eid, *Reading Stability from Traces: Certifying Multi-Agent LLM Loops with Unknown Delay from Short, Contaminated Execution Logs*, preprint (2026). It covers the estimator's guarantees (scale invariance, exact recovery under contamination, consistency, soundness of verdicts, abstention) and a comparison with least squares, Huber regression, ARX and delay-blind regression. Its experiment code and data are released with the paper.
 - M. Eid, *Delay-Induced Instability in Multi-Agent LLM Orchestration: Exact Stability Boundaries and a Delay-Aware Extension of UCCF*, preprint, doi:[10.5281/zenodo.23697430](https://doi.org/10.5281/zenodo.23697430).
 - M. Eid, *Artificial Intelligence Needs Control Theory: Towards Stable, Adaptive, and Autonomous AI Systems*, preprint, doi:[10.5281/zenodo.23378509](https://doi.org/10.5281/zenodo.23378509).
 - S. A. Levin and R. M. May, *A note on difference-delay equations*, Theoretical Population Biology 9 (1976).

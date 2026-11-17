@@ -34,7 +34,7 @@ from typing import Callable, Optional, Sequence
 
 import numpy as np
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 D_CAP = 20                      # largest delay (in steps) handled by the operators
 
 
@@ -213,24 +213,31 @@ class Fit:
     note: str = ""
 
 
-def _wmedian(v: np.ndarray, w: np.ndarray) -> float:
-    o = np.argsort(v)
+def _wmedian(v: np.ndarray, w: np.ndarray, rtol: float = 1e-9) -> float:
+    """Smallest value at which the cumulative weight reaches half of the total.
+    The relative tolerance resolves an exact tie at one half the same way
+    whatever the floating-point rounding of the cumulative sum."""
+    o = np.argsort(v, kind="stable")
     c = np.cumsum(w[o])
-    return float(v[o][np.searchsorted(c, 0.5 * c[-1])])
+    i = int(np.searchsorted(c, 0.5 * c[-1] * (1.0 - rtol)))
+    return float(v[o][min(i, len(c) - 1)])
 
 
 def _robust_select(X: np.ndarray, y: np.ndarray, scale: np.ndarray, usable: list):
     """For each candidate delay d: K_d = weighted median of -y/X[:,d] over steps
-    where that lag is non-zero; loss = mean over ALL steps of |y + K_d X[:,d]| / scale.
+    where that lag is non-zero, with weights |X[:,d]| / max_j |X[:,j]| (a past-only
+    scale, so a step's weight never depends on its own reply; Paper III, Prop. 4);
+    loss = mean over ALL steps of |y + K_d X[:,d]| / scale.
     Each step's scaled residual is bounded by 1 + |K_d|, so one wild correction
     cannot dominate, and steps where nothing happened still count as evidence."""
     best, losses = None, {}
+    sig = np.abs(X).max(axis=1)          # past-only scale: fixed before the reply at step t
     for d in usable:
         x = X[:, d]
         m = np.abs(x) > 1e-12 * scale
         if m.sum() < 1:
             continue
-        K = _wmedian(-y[m] / x[m], np.abs(x[m]) / scale[m])
+        K = _wmedian(-y[m] / x[m], np.abs(x[m]) / sig[m])
         loss = float(np.mean(np.abs(y + K * x) / scale))
         losses[d] = loss
         if best is None or loss < best[2] - 1e-12:

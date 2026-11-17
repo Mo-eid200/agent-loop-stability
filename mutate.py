@@ -25,7 +25,7 @@ MUTATIONS = [
     ("latency rounded instead of floored", "np.floor(np.asarray(lat_s) / period_s)",
      "np.round(np.asarray(lat_s) / period_s)"),
     ("robust fit replaced by plain mean of ratios",
-     "K = _wmedian(-y[m] / x[m], np.abs(x[m]) / scale[m])", "K = float(np.mean(-y[m] / x[m]))"),
+     "K = _wmedian(-y[m] / x[m], np.abs(x[m]) / sig[m])", "K = float(np.mean(-y[m] / x[m]))"),
     ("pre-trace history padded with zeros", "np.full(d_max, e[0])", "np.zeros(d_max)"),
     ("verdict ignores the confidence interval", "if hi < kap_lo * (1 - band):",
      "if fit.K < kap * (1 - band):"),
